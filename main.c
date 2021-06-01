@@ -23,6 +23,26 @@
 
 typedef unsigned long u64;
 
+int msleep(u64 msec) {
+    struct timespec ts;
+    int res;
+
+    if (msec < 0)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    ts.tv_sec = msec / 1000;
+    ts.tv_nsec = (msec % 1000) * 1000000;
+
+    do {
+        res = nanosleep(&ts, &ts);
+    } while (res && errno == EINTR);
+
+    return res;
+}
+
 typedef struct {
     u64 start_ns;
     u64 during_ns;
@@ -81,7 +101,7 @@ typedef struct {
 static void* set_flag(void* userdata) {
     SetFlagThreadArgs* args = (SetFlagThreadArgs*)userdata;
 
-    sleep(args->sleep_ms / 1000);
+    msleep(args->sleep_ms);
 
     int err = pthread_mutex_lock(args->mutex);
     if (err != 0) {
